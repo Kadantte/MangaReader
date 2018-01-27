@@ -50,5 +50,7 @@ namespace MangaReader.Core.Manga
     void Refresh();
 
     void UpdateContent();
+
+    System.Threading.Tasks.Task Download();
   }
 }

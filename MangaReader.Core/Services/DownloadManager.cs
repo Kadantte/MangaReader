@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using MangaReader.Core.Manga;
 
 namespace MangaReader.Core.Services
 {
@@ -20,7 +23,32 @@ namespace MangaReader.Core.Services
       while (IsPaused)
       {
         await Task.Delay(1000);
-      }      
+      }
+    }
+
+    public static async Task TestDownloadSpeed(IManga manga)
+    {
+      manga.UpdateContent();
+      var pages = manga.Pages.ToList();
+      var chapters = manga.Chapters.ToList();
+      chapters.AddRange(manga.Volumes.SelectMany(c => c.Container));
+      MethodInfo methodInfo = null;
+      if (chapters.Any())
+        foreach (var chapter in chapters.Where(c => c.Container == null || !c.Container.Any()))
+        {
+          methodInfo = methodInfo ?? chapter.GetType().GetMethod("UpdatePages", BindingFlags.NonPublic | BindingFlags.Instance);
+          methodInfo.Invoke(chapter, null);
+        }
+      pages.AddRange(chapters.SelectMany(c => c.Container));
+
+      var sw = new Stopwatch();
+      sw.Start();
+      var tasks = pages.Select(c => DownloadImage(c.ImageLink));
+      await Task.WhenAll(tasks);
+      sw.Stop();
+      var size = tasks.Sum(t => t.Result.Body.LongLength);
+      var log = $"Загружено {pages.Count} картинок, размером {size.HumanizeByteSize()} за {sw.Elapsed.TotalSeconds} секунд, итого {(size / sw.Elapsed.TotalSeconds).HumanizeByteSize()} в секунду";
+      Log.Info(log);
     }
 
     /// <summary>

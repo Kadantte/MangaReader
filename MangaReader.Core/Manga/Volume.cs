@@ -18,7 +18,7 @@ namespace MangaReader.Core.Manga
 
     public virtual bool OnlyUpdate { get; set; }
 
-    public override Task Download(string mangaFolder = null)
+    public override Task Download(string mangaFolder, Throttler throttler)
     {
       var volumeFolder = Path.Combine(mangaFolder, this.Folder);
 
@@ -31,7 +31,7 @@ namespace MangaReader.Core.Manga
       var tasks = this.InDownloading.Select(c =>
       {
         c.OnlyUpdate = this.OnlyUpdate;
-        return c.Download(volumeFolder);
+        return c.Download(volumeFolder, throttler);
       });
       return Task.WhenAll(tasks);
     }

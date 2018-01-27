@@ -17,6 +17,13 @@ namespace Tests.Entities.Download
     private int lastPercent = 0;
 
     [Test]
+    public async Task TestDonwloadSpeed()
+    {
+      var rm = Mangas.CreateFromWeb(new Uri(@"http://hentai-chan.me/manga/12850-twisted-intent-chast-1.html"));
+      await DownloadManager.TestDownloadSpeed(rm);
+    }
+
+    [Test]
     public async Task DownloadHentaichan()
     {
       CreateLogin();

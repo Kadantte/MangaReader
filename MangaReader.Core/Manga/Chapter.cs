@@ -40,7 +40,7 @@ namespace MangaReader.Core.Manga
     /// Скачать главу.
     /// </summary>
     /// <param name="downloadFolder">Папка для файлов.</param>
-    public override async Task Download(string downloadFolder = null)
+    public override async Task Download(string downloadFolder, Throttler throttler)
     {
       await DownloadManager.CheckPause();
       var chapterFolder = Path.Combine(downloadFolder, this.Folder);
@@ -62,7 +62,8 @@ namespace MangaReader.Core.Manga
         if (!Directory.Exists(chapterFolder))
           Directory.CreateDirectory(chapterFolder);
 
-        var pTasks = this.InDownloading.Select(page => page.Download(chapterFolder).LogException(string.Empty, $"Не удалось скачать изображение {page.ImageLink} со страницы {page.Uri}"));
+        var pTasks = this.InDownloading.Select(page => page.Download(chapterFolder, throttler)
+          .LogException(string.Empty, $"Не удалось скачать изображение {page.ImageLink} со страницы {page.Uri}"));
         await Task.WhenAll(pTasks.ToArray());
       }
       catch (AggregateException ae)

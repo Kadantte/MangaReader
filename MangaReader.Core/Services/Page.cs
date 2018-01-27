@@ -19,17 +19,18 @@ namespace MangaReader.Core.Services
     /// Получить текст страницы.
     /// </summary>
     /// <param name="url">Ссылка на страницу.</param>
+    /// <param name="throttler">Limiter.</param>
     /// <param name="client">Клиент, если нужен специфичный.</param>
     /// <param name="restartCounter">Попыток скачивания.</param>
     /// <returns>Исходный код страницы.</returns>
-    public static Page GetPage(Uri url, CookieClient client = null, int restartCounter = 0)
+    public static Page GetPage(Uri url, Throttler throttler, CookieClient client = null, int restartCounter = 0)
     {
       try
       {
         if (restartCounter > 3)
           throw new DownloadAttemptFailed(restartCounter, url);
 
-        using (ThrottleService.Wait())
+        using (throttler.Wait())
         {
           var webClient = client ?? new CookieClient();
           var content = webClient.DownloadString(url);
@@ -48,7 +49,7 @@ namespace MangaReader.Core.Services
         if (ex.Status != WebExceptionStatus.Timeout && !DelayOnExpectationFailed(ex))
           return new Page(url);
         ++restartCounter;
-        return GetPage(url, client, restartCounter);
+        return GetPage(url, throttler, client, restartCounter);
       }
       catch (System.Exception ex)
       {
@@ -74,17 +75,18 @@ namespace MangaReader.Core.Services
     /// Получить текст страницы.
     /// </summary>
     /// <param name="url">Ссылка на страницу.</param>
+    /// <param name="throttler">Limiter.</param>
     /// <param name="client">Клиент, если нужен специфичный.</param>
     /// <param name="restartCounter">Попыток скачивания.</param>
     /// <returns>Исходный код страницы.</returns>
-    public static async Task<Page> GetPageAsync(Uri url, CookieClient client = null, int restartCounter = 0)
+    public static async Task<Page> GetPageAsync(Uri url, Throttler throttler, CookieClient client = null, int restartCounter = 0)
     {
       try
       {
         if (restartCounter > 3)
           throw new DownloadAttemptFailed(restartCounter, url);
 
-        using (await ThrottleService.WaitAsync())
+        using (await throttler.WaitAsync())
         {
           var webClient = client ?? new CookieClient();
           var task = webClient.DownloadStringTaskAsync(url).ConfigureAwait(false);
@@ -102,7 +104,7 @@ namespace MangaReader.Core.Services
         if (ex.Status != WebExceptionStatus.Timeout)
           return new Page(url);
         ++restartCounter;
-        return await GetPageAsync(url, client, restartCounter).ConfigureAwait(false);
+        return await GetPageAsync(url, throttler, client, restartCounter).ConfigureAwait(false);
       }
       catch (System.Exception ex)
       {

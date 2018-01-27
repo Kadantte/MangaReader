@@ -49,7 +49,7 @@ namespace MangaReader.Core.Manga
 
     public DateTime? DownloadedAt { get; set; }
 
-    public abstract Task Download(string folder = null);
+    public abstract Task Download(string folder, Throttler throttler);
 
     public virtual void ClearHistory()
     {

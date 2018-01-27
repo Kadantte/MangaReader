@@ -290,7 +290,13 @@ namespace MangaReader.Core.Manga
       }
     }
 
-    public virtual async Task Download(string mangaFolder = null)
+    public virtual async Task Download()
+    {
+#warning тут какой то троттлер от настроек
+      await Download(null, null);
+    }
+
+    public virtual async Task Download(string mangaFolder, Throttler throttler)
     {
       if (!this.NeedUpdate)
         return;
@@ -348,7 +354,7 @@ namespace MangaReader.Core.Manga
               v =>
               {
                 v.OnlyUpdate = this.Setting.OnlyUpdate;
-                return v.Download(mangaFolder).ContinueWith(t =>
+                return v.Download(mangaFolder, throttler).ContinueWith(t =>
                 {
                   if (t.Exception != null)
                     Log.Exception(t.Exception, v.Uri?.ToString());
@@ -364,7 +370,7 @@ namespace MangaReader.Core.Manga
             ch =>
             {
               ch.OnlyUpdate = this.Setting.OnlyUpdate;
-              return ch.Download(mangaFolder).ContinueWith(t =>
+              return ch.Download(mangaFolder, throttler).ContinueWith(t =>
               {
                 if (t.Exception != null)
                   Log.Exception(t.Exception, ch.Uri?.ToString());
@@ -379,7 +385,7 @@ namespace MangaReader.Core.Manga
           var pTasks = this.ActivePages.Select(
             p =>
             {
-              return p.Download(mangaFolder).ContinueWith(t =>
+              return p.Download(mangaFolder, throttler).ContinueWith(t =>
               {
                 if (t.Exception != null)
                   Log.Exception(t.Exception, $"Не удалось скачать изображение {p.ImageLink} со страницы {p.Uri}");

@@ -4,35 +4,43 @@ using System.Threading.Tasks;
 
 namespace MangaReader.Core.Services
 {
-  public class ThrottleService : IDisposable
+  public class Throttler : IDisposable
   {
-    private static SemaphoreSlim throttler = new SemaphoreSlim(15);
+    private readonly SemaphoreSlim throttler;
 
-    private bool? released = null;
-
-    public static async Task<IDisposable> WaitAsync()
+    public async Task<IDisposable> WaitAsync()
     {
       await throttler.WaitAsync();
-      return new ThrottleService();
+      return new Releaser(throttler);
     }
 
-    public static IDisposable Wait()
+    public IDisposable Wait()
     {
       throttler.Wait();
-      return new ThrottleService();
+      return new Releaser(throttler);
     }
 
-    private ThrottleService()
+    public Throttler(int limit)
     {
-      released = false;
+      throttler = new SemaphoreSlim(limit);
     }
 
     public void Dispose()
     {
-      if (released == false)
+      throttler?.Dispose();
+    }
+
+    private struct Releaser : IDisposable
+    {
+      private readonly SemaphoreSlim slim;
+      public Releaser(SemaphoreSlim slim)
       {
-        throttler.Release();
-        released = true;
+        this.slim = slim;
+      }
+
+      public void Dispose()
+      {
+        slim?.Release();
       }
     }
   }

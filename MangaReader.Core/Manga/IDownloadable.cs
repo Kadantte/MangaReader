@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MangaReader.Core.Services;
 
 namespace MangaReader.Core.Manga
 {
@@ -54,7 +55,7 @@ namespace MangaReader.Core.Manga
     /// <summary>
     /// Скачать все главы.
     /// </summary>
-    Task Download(string folder = null);
+    Task Download(string folder, Throttler throttler);
 
     /// <summary>
     /// Clear history.

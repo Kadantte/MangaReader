@@ -73,7 +73,8 @@ namespace MangaReader.Core.Manga
     /// Скачать страницу.
     /// </summary>
     /// <param name="chapterFolder">Папка для файлов.</param>
-    public async Task Download(string chapterFolder)
+    /// <param name="throttler">Limiter for parallel load.</param>
+    public async Task Download(string chapterFolder, Throttler throttler)
     {
       this.IsDownloaded = false;
 
@@ -83,7 +84,7 @@ namespace MangaReader.Core.Manga
       try
       {
         await DownloadManager.CheckPause();
-        using (await ThrottleService.WaitAsync())
+        using (await throttler.WaitAsync())
         {
           await DownloadManager.CheckPause();
           chapterFolder = DirectoryHelpers.MakeValidPath(chapterFolder);
@@ -102,7 +103,7 @@ namespace MangaReader.Core.Manga
       {
         Log.Exception(ex, this.Uri.OriginalString);
         ++restartCounter;
-        await Download(chapterFolder);
+        await Download(chapterFolder, throttler);
       }
     }
 
