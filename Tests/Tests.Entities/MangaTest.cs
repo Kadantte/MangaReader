@@ -29,7 +29,7 @@ namespace Tests
         MangaInfos.Henchan.TwistedIntent,
         MangaInfos.Hentai2Read.AttentionPlease,
         MangaInfos.Mangachan.Rain,
-        MangaInfos.Mintmanga.HarukaNaReceive,
+        MangaInfos.Mintmanga.ChiaChia,
         MangaInfos.Readmanga.Kuroshitsuji
       };
     }
@@ -74,7 +74,7 @@ namespace Tests
       var files = Directory.GetFiles(manga.GetAbsoluteFolderPath(), "*", SearchOption.AllDirectories);
       Assert.AreEqual(mangaInfo.FilesInFolder, files.Length);
       var fileInfos = files.Select(f => new FileInfo(f)).ToList();
-      Assert.AreEqual(mangaInfo.FolderSize, fileInfos.Sum(f => f.Length), mangaInfo.FolderSize/100.0);
+      Assert.AreEqual(mangaInfo.FolderSize, fileInfos.Sum(f => f.Length), mangaInfo.FolderSize/50.0);
       if (mangaInfo.AllFilesUnique)
         Assert.AreEqual(1, fileInfos.GroupBy(f => f.Length).Max(g => g.Count()));
       Assert.IsTrue(manga.IsDownloaded);
@@ -87,15 +87,6 @@ namespace Tests
       IManga manga;
       using (var context = Repository.GetEntityContext("Description"))
       {
-        if (mangaInfo.Uri == MangaInfos.Mangachan.EveScramble.Uri)
-        {
-          var login = await context.Get<MangachanLogin>().SingleAsync().ConfigureAwait(false);
-          login.PasswordHash = "e84fce6c43aacd7f8452409a63083c18";
-          login.UserId = "282433";
-          login.IsLogined = true;
-          await context.Save(login).ConfigureAwait(false);
-        }
-
         var mangaUri = new Uri(mangaInfo.Uri);
         var existsManga = await context.Get<IManga>().FirstOrDefaultAsync(m => m.Uri == mangaUri).ConfigureAwait(false);
         if (existsManga != null)

@@ -392,6 +392,7 @@
     <Resource Include="Icons\Navigation\skip_to_start.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Linux.targets" />
     <None Include="packages.config" />
     <None Include="Update\MangaReader.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -407,6 +408,7 @@
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   -->
+  <Import Project="Linux.targets" Condition=" '$(OS)' != 'Windows_NT' " />
   <Target Name="BeforeBuild">
   </Target>
   <Target Name="AfterBuild">

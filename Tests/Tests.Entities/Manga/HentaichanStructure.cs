@@ -6,6 +6,7 @@ using MangaReader.Core.Manga;
 using MangaReader.Core.NHibernate;
 using MangaReader.Core.Services.Config;
 using NUnit.Framework;
+using Tests.Entities.MangaSetting;
 
 namespace Tests.Entities.Manga
 {
@@ -15,7 +16,7 @@ namespace Tests.Entities.Manga
     [Test]
     public async Task AddHentaichanMultiPages()
     {
-      var manga = await GetManga("https://hentai-chan.pro/manga/14212-love-and-devil-glava-25.html").ConfigureAwait(false);
+      var manga = await GetManga("https://hen-chan.pro/manga/14212-love-and-devil-glava-25.html").ConfigureAwait(false);
       Assert.AreEqual(25, manga.Chapters.Count);
       Assert.IsTrue(manga.HasChapters);
     }
@@ -23,7 +24,7 @@ namespace Tests.Entities.Manga
     [Test]
     public async Task AddHentaichanOneChapter()
     {
-      var manga = await GetManga("https://hentai-chan.pro/manga/15131-chuui-horeru-to-yakui-kara.html").ConfigureAwait(false);
+      var manga = await GetManga("https://hen-chan.pro/manga/15131-chuui-horeru-to-yakui-kara.html").ConfigureAwait(false);
       Assert.AreEqual(1, manga.Chapters.Count);
       Assert.IsTrue(manga.HasChapters);
     }
@@ -31,7 +32,7 @@ namespace Tests.Entities.Manga
     [Test]
     public async Task AddHentaichanSubdomain()
     {
-      var manga = await GetManga("https://hentai-chan.pro/manga/23083-ponpharse-tokubetsu-hen-chast-1.html").ConfigureAwait(false);
+      var manga = await GetManga("https://hen-chan.pro/manga/23083-ponpharse-tokubetsu-hen-chast-1.html").ConfigureAwait(false);
       Assert.AreEqual(2, manga.Chapters.Count);
       Assert.IsTrue(manga.HasChapters);
       Assert.AreEqual(1, manga.Chapters.First().Number);
@@ -54,27 +55,27 @@ namespace Tests.Entities.Manga
     public async Task HentaichanNameParsing()
     {
       // Спецсимвол \
-      await TestNameParsing("https://hentai-chan.pro/manga/14504-lets-play-lovegames-shall-we-glava-1.html",
+      await TestNameParsing("https://hen-chan.pro/manga/14504-lets-play-lovegames-shall-we-glava-1.html",
         "Let's Play Lovegames, Shall We?").ConfigureAwait(false);
 
       // Спецсимвол # и одна глава
-      await TestNameParsing("https://hentai-chan.pro/manga/15109-exhibitionist-renko-chan.html",
+      await TestNameParsing("https://hen-chan.pro/manga/15109-exhibitionist-renko-chan.html",
         "#Exhibitionist Renko-chan").ConfigureAwait(false);
 
       // Символ звездочки *
-      await TestNameParsing("https://hentai-chan.pro/manga/15131-chuui-horeru-to-yakui-kara.html",
+      await TestNameParsing("https://hen-chan.pro/manga/15131-chuui-horeru-to-yakui-kara.html",
         "*Chuui* Horeru to Yakui kara").ConfigureAwait(false);
 
       // Символ /
-      await TestNameParsing("https://hentai-chan.pro/manga/10535-blush-dc.-glava-1.html",
+      await TestNameParsing("https://hen-chan.pro/manga/10535-blush-dc.-glava-1.html",
         "/Blush-DC.").ConfigureAwait(false);
 
       // На всякий случай
-      await TestNameParsing("https://hentai-chan.pro/manga/23083-ponpharse-tokubetsu-hen-chast-1.html",
+      await TestNameParsing("https://hen-chan.pro/manga/23083-ponpharse-tokubetsu-hen-chast-1.html",
         "Ponpharse - Tokubetsu Hen").ConfigureAwait(false);
 
       // Манга требующая регистрации для просмотра
-      await TestNameParsing("https://hentai-chan.pro/manga/14212-love-and-devil-glava-25.html",
+      await TestNameParsing("https://hen-chan.pro/manga/14212-love-and-devil-glava-25.html",
         "Love and Devil").ConfigureAwait(false);
     }
 
@@ -95,16 +96,15 @@ namespace Tests.Entities.Manga
 
     private async Task Login()
     {
+      var (testLogin, _) = AllLoginTests.GetLogins().Single(l => l.Item2 == HentaichanPlugin.Manga);
       using (var context = Repository.GetEntityContext())
       {
-        var userId = "235332";
         var setting = ConfigStorage.GetPlugin<Hentaichan.Hentaichan>().GetSettings();
-        var login = setting.Login as Hentaichan.HentaichanLogin;
-        if (login.UserId != userId)
+        var login = setting.Login;
+        if (login.Name != testLogin.Name)
         {
-          login.UserId = userId;
-          login.PasswordHash = "0578caacc02411f8c9a1a0af31b3befa";
-          login.IsLogined = true;
+          setting.Login = testLogin;
+          await testLogin.DoLogin(HentaichanPlugin.Manga).ConfigureAwait(false);
           await context.Save(setting).ConfigureAwait(false);
         }
       }
@@ -115,10 +115,8 @@ namespace Tests.Entities.Manga
       using (var context = Repository.GetEntityContext())
       {
         var setting = ConfigStorage.GetPlugin<Hentaichan.Hentaichan>().GetSettings();
-        var login = setting.Login as Hentaichan.HentaichanLogin;
-        login.UserId = "";
-        login.PasswordHash = "";
-        login.IsLogined = false;
+        var login = setting.Login;
+        await login.Logout(HentaichanPlugin.Manga).ConfigureAwait(false);
         await context.Save(setting).ConfigureAwait(false);
       }
     }

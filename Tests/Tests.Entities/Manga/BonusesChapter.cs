@@ -15,15 +15,6 @@ namespace Tests.Entities.Manga
     [Test]
     public async Task MangachanBonus()
     {
-      using (var context = Repository.GetEntityContext())
-      {
-        var login = await context.Get<MangachanLogin>().SingleAsync().ConfigureAwait(false);
-        login.PasswordHash = "e84fce6c43aacd7f8452409a63083c18";
-        login.UserId = "282433";
-        login.IsLogined = true;
-        await context.Save(login).ConfigureAwait(false);
-      }
-
       var manga = await Mangas.CreateFromWeb(new Uri("https://manga-chan.me/manga/5335-the-breaker-new-waves.html")).ConfigureAwait(false);
       await manga.Parser.UpdateContent(manga).ConfigureAwait(false);
       var chapters = manga.Volumes.SelectMany(v => v.Container).ToList();
@@ -44,17 +35,10 @@ namespace Tests.Entities.Manga
     [Test]
     public async Task MintmangaBonus()
     {
-      using (var context = Repository.GetEntityContext())
-      {
-        var uri = new Uri(MangaInfos.Mintmanga.HarukaNaReceive.Uri);
-        var toRemove = await context.Get<IManga>().Where(m => m.Uri == uri).ToListAsync().ConfigureAwait(false);
-        foreach (var remove in toRemove)
-          await context.Delete(remove).ConfigureAwait(false);
-        var manga = await Mangas.CreateFromWeb(uri).ConfigureAwait(false);
-        await manga.Parser.UpdateContent(manga).ConfigureAwait(false);
-        var chapters = manga.Volumes.SelectMany(v => v.Container).OfType<Grouple.GroupleChapter>();
-        Assert.AreEqual(1, chapters.Count(c => c.VolumeNumber == 1 && c.Number == 0));
-      }
+      var manga = await Mangas.CreateFromWeb(new Uri("https://mintmanga.live/harukana_receive")).ConfigureAwait(false);
+      await manga.Parser.UpdateContent(manga).ConfigureAwait(false);
+      var chapters = manga.Volumes.SelectMany(v => v.Container).OfType<Grouple.GroupleChapter>();
+      Assert.AreEqual(1, chapters.Count(c => c.VolumeNumber == 1 && c.Number == 0));
     }
   }
 }
